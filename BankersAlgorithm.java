@@ -1,10 +1,15 @@
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class BankersAlgorithm {
-    static int P;
-    static int R;
+    static int P; // Number of processes
+    static int R; // Number of resources
 
-    static void calculateNeed(int need[][], int max[][], int allot[][]) {
+    static void calculateNeed(int[][] need, int[][] max, int[][] allot) {
         for (int i = 0; i < P; i++) {
             for (int j = 0; j < R; j++) {
                 need[i][j] = max[i][j] - allot[i][j];
@@ -12,7 +17,7 @@ public class BankersAlgorithm {
         }
     }
 
-    static boolean isSafe(int processes[], int avail[], int max[][], int allot[][]) {
+    static boolean isSafe(int[] processes, int[] avail, int[][] max, int[][] allot, String outputFilePath) {
         int[][] need = new int[P][R];
         calculateNeed(need, max, allot);
 
@@ -35,68 +40,76 @@ public class BankersAlgorithm {
                             break;
                         }
                     }
-                    if (j == R) { 
+                    if (j == R) {
                         for (int k = 0; k < R; k++) {
-                            work[k] += allot[p][k]; 
+                            work[k] += allot[p][k];
                         }
-                        safeSeq[count++] = p; 
-                        finish[p] = true; 
+                        safeSeq[count++] = p;
+                        finish[p] = true;
                         found = true;
                     }
                 }
             }
             if (!found) {
-                System.out.println("System is not in a safe state.");
+                try (FileWriter writer = new FileWriter(outputFilePath)) {
+                    writer.write("System is not in a safe state\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 return false;
             }
         }
 
-        System.out.println("System is in a safe state.");
-        System.out.print("Safe sequence is: ");
-        for (int i = 0; i < P; i++) {
-            System.out.print(safeSeq[i] + " ");
+        try (FileWriter writer = new FileWriter(outputFilePath)) {
+            writer.write("System is in a safe state\nSafe sequence is: ");
+            for (int i = 0; i < P; i++) {
+                writer.write(safeSeq[i] + " ");
+            }
+            writer.write("\n");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        System.out.println();
         return true;
     }
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        String inputFilePath = "input.txt";
+        String outputFilePath = "output.txt";
 
-        System.out.print("Enter number of processes: ");
-        P = scanner.nextInt();
-        System.out.print("Enter number of resources: ");
-        R = scanner.nextInt();
+        try (Scanner scanner = new Scanner(new File(inputFilePath))) {
+            P = scanner.nextInt();
+            R = scanner.nextInt();
 
-        int[] processes = new int[P];
-        for (int i = 0; i < P; i++) {
-            processes[i] = i;
-        }
-
-        int[][] allot = new int[P][R];
-        int[][] max = new int[P][R];
-        int[] avail = new int[R];
-
-        System.out.println("Enter allocation matrix:");
-        for (int i = 0; i < P; i++) {
-            for (int j = 0; j < R; j++) {
-                allot[i][j] = scanner.nextInt();
+            int[] processes = new int[P];
+            for (int i = 0; i < P; i++) {
+                processes[i] = i;
             }
-        }
 
-        System.out.println("Enter maximum matrix:");
-        for (int i = 0; i < P; i++) {
-            for (int j = 0; j < R; j++) {
-                max[i][j] = scanner.nextInt();
+            int[][] max = new int[P][R];
+            int[][] allot = new int[P][R];
+            int[] avail = new int[R];
+
+            for (int i = 0; i < P; i++) {
+                for (int j = 0; j < R; j++) {
+                    allot[i][j] = scanner.nextInt();
+                }
             }
-        }
 
-        System.out.println("Enter available resources:");
-        for (int j = 0; j < R; j++) {
-            avail[j] = scanner.nextInt();
-        }
+            for (int i = 0; i < P; i++) {
+                for (int j = 0; j < R; j++) {
+                    max[i][j] = scanner.nextInt();
+                }
+            }
 
-        isSafe(processes, avail, max, allot);
-        scanner.close();
+            for (int i = 0; i < R; i++) {
+                avail[i] = scanner.nextInt();
+            }
+
+            isSafe(processes, avail, max, allot, outputFilePath);
+
+        } catch (FileNotFoundException e) {
+            System.out.println("Input file not found: " + inputFilePath);
+            e.printStackTrace();
+        }
     }
 }
